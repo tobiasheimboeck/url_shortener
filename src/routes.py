@@ -1,9 +1,8 @@
-from typing import Any
-
 import validators
 from flask import request, jsonify, redirect
 from models import db, ShortUrl, ShortUrlAnalytics
 from utils import generate_short_code
+from datetime import datetime, timedelta
 
 
 @db.event.listens_for(db.session, 'after_flush')
@@ -28,7 +27,9 @@ def shorten_url():
     while ShortUrl.query.filter_by(short_code=short_code).first():
         short_code = generate_short_code()
 
-    new_url = ShortUrl(short_code=short_code, original_url=original_url)
+    expires_at = datetime.now() + timedelta(seconds=20)
+
+    new_url = ShortUrl(short_code=short_code, original_url=original_url, expires_at=expires_at)
     db.session.add(new_url)
     db.session.commit()
 
@@ -36,7 +37,7 @@ def shorten_url():
 
 
 def redirect_to_original_url(short_code):
-    url_entry = ShortUrl.query.filter_by(short_code=short_code).first()
+    url_entry: ShortUrl = ShortUrl.query.filter_by(short_code=short_code).first()
 
     if not url_entry:
         return jsonify({"error": "Short URL not found"}), 404
@@ -45,5 +46,9 @@ def redirect_to_original_url(short_code):
         db.session.delete(url_entry)
         db.session.commit()
         return jsonify({"error": "Short URL has expired"}), 410
+
+    url_analytics_entry = ShortUrlAnalytics.query.filter_by(short_code=short_code).first()
+    url_analytics_entry.visits += 1
+    db.session.commit()
 
     return redirect(url_entry.original_url)
