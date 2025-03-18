@@ -1,0 +1,40 @@
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment directory
+.venv/
+env/
+venv/
+
+# Flask instance folder (optional if using Flask)
+instance/
+
+# IDE/editor specific files
+.vscode/
+.idea/
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+
+# Configuration files for Python tools
+*.env
+*.flaskenv
+
+# SQLite databases (optional, in case you're using SQLite for local development)
+*.sqlite3
+*.db
+
+# Logs
+*.log
+
+# Dependency directories
+node_modules/
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
