@@ -5,20 +5,13 @@ from flask import request, jsonify, redirect
 from models import db, ShortUrl, ShortUrlAnalytics
 from utils import generate_short_code
 
+
 @db.event.listens_for(db.session, 'after_flush')
 def create_analytics_entry(session, flush_context):
     for short_url in session.new:
         if isinstance(short_url, ShortUrl):
             analytics_entry = ShortUrlAnalytics(short_code=short_url.short_code)
             session.add(analytics_entry)
-
-
-@db.event.listens_for(ShortUrl, "after_delete")
-def delete_analytics_entry(mapper, connection, target):
-    analytics_entry = ShortUrlAnalytics.query.filter_by(short_code=target.short_code).first()
-    db.session.delete(analytics_entry)
-    db.session.commit()
-
 
 def shorten_url():
     data = request.json
@@ -49,6 +42,8 @@ def redirect_to_original_url(short_code):
         return jsonify({"error": "Short URL not found"}), 404
 
     if url_entry.is_expired():
+        db.session.delete(url_entry)
+        db.session.commit()
         return jsonify({"error": "Short URL has expired"}), 410
 
     return redirect(url_entry.original_url)
