@@ -1,8 +1,9 @@
+from typing import Any
+
 import validators
 from flask import request, jsonify, redirect
 from models import db, ShortUrl, ShortUrlAnalytics
 from utils import generate_short_code
-
 
 @db.event.listens_for(db.session, 'after_flush')
 def create_analytics_entry(session, flush_context):
@@ -44,7 +45,10 @@ def shorten_url():
 def redirect_to_original_url(short_code):
     url_entry = ShortUrl.query.filter_by(short_code=short_code).first()
 
-    if url_entry:
-        return redirect(url_entry.original_url)
+    if not url_entry:
+        return jsonify({"error": "Short URL not found"}), 404
 
-    return jsonify({"error": "Short URL not found"}), 404
+    if url_entry.is_expired():
+        return jsonify({"error": "Short URL has expired"}), 410
+
+    return redirect(url_entry.original_url)
