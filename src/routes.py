@@ -31,7 +31,6 @@ def shorten_url():
 
     short_code = generate_short_code()
 
-    # Ensure unique short code
     while ShortUrl.query.filter_by(short_code=short_code).first():
         short_code = generate_short_code()
 
